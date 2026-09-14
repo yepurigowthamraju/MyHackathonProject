@@ -17,13 +17,15 @@ const app = express();
 
 const PORT = process.env.PORT || 3001;
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on port ${PORT}`);
-});
+
 
 app.use(
   cors({
-    origin: 'http://localhost:5173',
+    origin: [
+      'http://localhost:5173',
+      'https://my-hackathon-project-kappa.vercel.app'
+    ],
+    credentials: true
   })
 );
 
@@ -643,9 +645,9 @@ app.get('/api/wellness/alerts', verifyToken, (req, res) => {
     });
   }
 });
-const server = app.listen(PORT, () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(
-    `Welfare Intelligence backend running on http://localhost:${PORT}`
+    `Welfare Intelligence backend running on port ${PORT}`
   );
 });
 
