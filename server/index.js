@@ -22,9 +22,10 @@ const PORT = process.env.PORT || 3001;
 app.use(
   cors({
     origin: [
-      'http://localhost:5173',
-      'https://my-hackathon-project-kappa.vercel.app'
-    ],
+  'http://localhost:5173',
+  'https://my-hackathon-project-kappa.vercel.app',
+  'https://my-hackathon-project-99io75598-yepurigowthamraju-projects.vercel.app'
+],
     credentials: true,
     methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization']
