@@ -17,6 +17,10 @@ const app = express();
 
 const PORT = process.env.PORT || 3001;
 
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server running on port ${PORT}`);
+});
+
 app.use(
   cors({
     origin: 'http://localhost:5173',
@@ -451,6 +455,57 @@ app.get('/api/wellness/analytics', verifyToken, (req, res) => {
     });
   }
 });
+app.get('/api/wellness/alerts', verifyToken, (req, res) => {
+  try {
+    if (req.user.role !== 'Welfare Administrator') {
+      return res.status(403).json({
+        error: 'You are not authorized to access welfare alerts.',
+      });
+    }
+
+    const alerts = db
+      .prepare(`
+        SELECT
+          personnel_id,
+          date,
+          stress_level,
+          fatigue_level,
+          sleep_hours,
+          mood,
+          energy_level,
+          ai_risk,
+          ai_confidence,
+          human_verification
+        FROM wellness_updates
+        WHERE ai_risk IN ('Moderate', 'High')
+        ORDER BY date DESC
+        LIMIT 20
+      `)
+      .all();
+
+    const formattedAlerts = alerts.map((item, index) => ({
+      id: `REAL-ALERT-${index}-${item.personnel_id}`,
+      severity: item.ai_risk,
+      title: `${item.ai_risk} wellness risk detected`,
+      timestamp: new Date(item.date).toLocaleString(),
+      description:
+        `Personnel ${item.personnel_id} recorded stress ${item.stress_level}/10, ` +
+        `fatigue ${item.fatigue_level}/10, sleep ${item.sleep_hours} hours, ` +
+        `mood ${item.mood}, and energy ${item.energy_level}/10.`,
+      affectedGroup: item.personnel_id,
+      aiConfidence: item.ai_confidence,
+      humanVerification: item.human_verification,
+    }));
+
+    res.json(formattedAlerts);
+  } catch (error) {
+    console.error('Wellness alerts error:', error);
+
+    res.status(500).json({
+      error: 'Failed to load wellness alerts.',
+    });
+  }
+});
 app.get('/api/wellness/trends', verifyToken, (req, res) => {
   try {
     if (req.user.role !== 'Welfare Administrator') {
@@ -479,6 +534,112 @@ app.get('/api/wellness/trends', verifyToken, (req, res) => {
 
     res.status(500).json({
       error: 'Failed to load wellness trends.',
+    });
+  }
+});
+app.get('/api/wellness/personnel', verifyToken, (req, res) => {
+  try {
+    if (req.user.role !== 'Welfare Administrator') {
+      return res.status(403).json({
+        error: 'You are not authorized to access personnel wellness data.',
+      });
+    }
+
+    const personnel = db
+      .prepare(`
+        SELECT
+          personnel_id,
+          MAX(date) AS last_check_in,
+          ROUND(AVG(sleep_hours), 1) AS average_sleep,
+          ROUND(AVG(stress_level), 1) AS average_stress,
+          ROUND(AVG(fatigue_level), 1) AS average_fatigue,
+          ROUND(AVG(energy_level), 1) AS average_energy,
+          ai_risk,
+          ai_confidence,
+          human_verification
+        FROM wellness_updates
+        GROUP BY personnel_id
+        ORDER BY
+          CASE ai_risk
+            WHEN 'High' THEN 1
+            WHEN 'Moderate' THEN 2
+            WHEN 'Low' THEN 3
+            ELSE 4
+          END,
+          last_check_in DESC
+      `)
+      .all();
+
+    res.json(personnel);
+  } catch (error) {
+    console.error('Personnel wellness error:', error);
+
+    res.status(500).json({
+      error: 'Failed to load personnel wellness data.',
+    });
+  }
+});
+app.get('/api/wellness/alerts', verifyToken, (req, res) => {
+  try {
+    if (req.user.role !== 'Welfare Administrator') {
+      return res.status(403).json({
+        error: 'You are not authorized to access welfare alerts.',
+      });
+    }
+
+    const alerts = db
+      .prepare(`
+        SELECT
+          personnel_id,
+          date,
+          stress_level,
+          fatigue_level,
+          sleep_hours,
+          mood,
+          energy_level,
+          ai_risk,
+          ai_confidence,
+          human_verification
+        FROM wellness_updates
+        WHERE ai_risk IN ('Moderate', 'High')
+        ORDER BY date DESC
+        LIMIT 50
+      `)
+      .all();
+
+    const formattedAlerts = alerts.map((item, index) => ({
+      id: `REAL-ALERT-${index + 1}`,
+      severity: item.ai_risk,
+      status: 'Active',
+      riskType:
+        item.ai_risk === 'High'
+          ? 'High Wellness Risk'
+          : 'Elevated Wellness Risk',
+      timestamp: new Date(item.date).toLocaleString(),
+      title:
+        item.ai_risk === 'High'
+          ? 'High Wellness Risk Detected'
+          : 'Moderate Wellness Risk Detected',
+      description:
+        `Personnel ${item.personnel_id} recorded stress ` +
+        `${item.stress_level}/10, fatigue ${item.fatigue_level}/10, ` +
+        `sleep ${item.sleep_hours} hours, mood ${item.mood}, ` +
+        `and energy ${item.energy_level}/10.`,
+      affectedGroup: item.personnel_id,
+      aiConfidence: item.ai_confidence ?? 80,
+      recommendedAction:
+        item.ai_risk === 'High'
+          ? 'Review the personnel wellness record and initiate appropriate human welfare support.'
+          : 'Review the wellness record and continue monitoring for changes.',
+      humanVerification: item.human_verification,
+    }));
+
+    res.json(formattedAlerts);
+  } catch (error) {
+    console.error('Wellness alerts error:', error);
+
+    res.status(500).json({
+      error: 'Failed to load wellness alerts.',
     });
   }
 });
