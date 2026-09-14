@@ -93,7 +93,7 @@ const [wellnessPersonnel, setWellnessPersonnel] = useState<any[]>([]);
         }
 
         const response = await fetch(
-          'http://localhost:3001/api/wellness/analytics',
+          `https://myhackathonproject.onrender.com/api/wellness/analytics`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -127,7 +127,7 @@ const [wellnessPersonnel, setWellnessPersonnel] = useState<any[]>([]);
       }
 
       const response = await fetch(
-        'http://localhost:3001/api/wellness/alerts',
+        `https://myhackathonproject.onrender.com/api/wellness/alerts`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -161,7 +161,7 @@ const [wellnessPersonnel, setWellnessPersonnel] = useState<any[]>([]);
       }
 
       const response = await fetch(
-        'http://localhost:3001/api/wellness/trends',
+        `https://myhackathonproject.onrender.com/api/wellness/trends`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -195,7 +195,7 @@ useEffect(() => {
       }
 
       const response = await fetch(
-        'http://localhost:3001/api/wellness/personnel',
+        `https://myhackathonproject.onrender.com/api/wellness/personnel`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
