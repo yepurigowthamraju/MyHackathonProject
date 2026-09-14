@@ -25,7 +25,9 @@ app.use(
       'http://localhost:5173',
       'https://my-hackathon-project-kappa.vercel.app'
     ],
-    credentials: true
+    credentials: true,
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization']
   })
 );
 
