@@ -19,10 +19,10 @@ const PORT = process.env.PORT || 3001;
 
 
 
-import cors from "cors";
 
 const allowedOrigins = [
   "https://my-hackathon-project-kappa.vercel.app",
+  "https://my-hackathon-project-nvez.vercel.app",
 ];
 
 app.use(
@@ -34,7 +34,6 @@ app.use(
   })
 );
 
-app.options("*", cors());
 
 app.use(express.json());
 
