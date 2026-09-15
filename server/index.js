@@ -20,14 +20,9 @@ const PORT = process.env.PORT || 3001;
 
 
 
-const allowedOrigins = [
-  "https://my-hackathon-project-kappa.vercel.app",
-  "https://my-hackathon-project-nvez.vercel.app",
-];
-
 app.use(
   cors({
-    origin: allowedOrigins,
+    origin: true,
     credentials: true,
     methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
