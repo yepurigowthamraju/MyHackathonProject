@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { API_BASE_URL } from '../config/api';
 import {
   User,
   BriefcaseBusiness,
@@ -62,7 +63,7 @@ export function RegisterView({
 
   try {
     const response = await fetch(
-  `${import.meta.env.VITE_API_URL}/api/auth/register`,
+  `${API_BASE_URL}/api/auth/register`,
   {
         method: 'POST',
         headers: {

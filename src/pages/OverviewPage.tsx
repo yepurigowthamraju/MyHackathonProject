@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { API_BASE_URL } from '../config/api';
 import { 
   Users, 
   Heart, 
@@ -93,7 +94,7 @@ const [wellnessPersonnel, setWellnessPersonnel] = useState<any[]>([]);
         }
 
         const response = await fetch(
-          `https://myhackathonproject.onrender.com/api/wellness/analytics`,
+          `${API_BASE_URL}/api/wellness/analytics`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -127,7 +128,7 @@ const [wellnessPersonnel, setWellnessPersonnel] = useState<any[]>([]);
       }
 
       const response = await fetch(
-        `https://myhackathonproject.onrender.com/api/wellness/alerts`,
+        `${API_BASE_URL}/api/wellness/alerts`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -161,7 +162,7 @@ const [wellnessPersonnel, setWellnessPersonnel] = useState<any[]>([]);
       }
 
       const response = await fetch(
-        `https://myhackathonproject.onrender.com/api/wellness/trends`,
+        `${API_BASE_URL}/api/wellness/trends`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -195,7 +196,7 @@ useEffect(() => {
       }
 
       const response = await fetch(
-        `https://myhackathonproject.onrender.com/api/wellness/personnel`,
+        `${API_BASE_URL}/api/wellness/personnel`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

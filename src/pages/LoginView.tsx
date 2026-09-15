@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { API_BASE_URL } from '../config/api';
 import {
   ShieldCheck,
   User,
@@ -45,7 +46,7 @@ export function LoginView({
 
   try {
    const response = await fetch(
-  `${import.meta.env.VITE_API_URL}/api/auth/login`,
+  `${API_BASE_URL}/api/auth/login`,
   {
         method: 'POST',
         headers: {

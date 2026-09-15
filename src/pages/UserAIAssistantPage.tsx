@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { API_BASE_URL } from '../config/api';
 import {
   Bot,
   Send,
@@ -72,7 +73,7 @@ export const UserAIAssistantPage: React.FC<
     }
 
    const response = await fetch(
-  `${import.meta.env.VITE_API_URL}/api/ai/chat`,
+  `${API_BASE_URL}/api/ai/chat`,
   {
     method: 'POST',
     headers: {

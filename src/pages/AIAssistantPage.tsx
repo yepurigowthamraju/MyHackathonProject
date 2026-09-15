@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { API_BASE_URL } from '../config/api';
 import { 
   Bot, 
   Sparkles, 
@@ -72,7 +73,7 @@ const handleSend = async (text: string) => {
     }
 
     const response = await fetch(
-      'http://localhost:3001/api/ai/chat',
+  `${API_BASE_URL}/api/ai/chat`,
       {
         method: 'POST',
         headers: {

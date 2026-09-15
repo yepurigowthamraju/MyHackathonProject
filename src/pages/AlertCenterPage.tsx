@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { API_BASE_URL } from '../config/api';
 import { 
   AlertTriangle, 
   CheckCircle2, 
@@ -38,9 +39,9 @@ export const AlertCenterPage: React.FC<AlertCenterPageProps> = ({
         return;
       }
 
-      const response = await fetch(
-        'http://localhost:3001/api/wellness/alerts',
-        {
+     const response = await fetch(
+  `${API_BASE_URL}/api/wellness/alerts`,
+  {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -223,9 +224,7 @@ export const AlertCenterPage: React.FC<AlertCenterPageProps> = ({
 
         {filteredAlerts.length === 0 && (
           <div className="p-12 text-center text-slate-400 font-mono text-xs glass-panel rounded-xl">
-            {liveAlerts.length === 0
-  ? 'No current wellness alerts. All recorded personnel are currently within Low Risk.'
-  : `No alerts found matching filter '${filterSeverity}'.`}
+            No alerts found matching filter '{filterSeverity}'.
           </div>
         )}
       </div>

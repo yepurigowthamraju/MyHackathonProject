@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { API_BASE_URL } from '../config/api';
 import {
   Activity,
   BrainCircuit,
@@ -128,7 +129,7 @@ export function UserDashboardPage({
   }
 
   const response = await fetch(
-    'http://localhost:3001/api/wellness',
+    `${API_BASE_URL}/api/wellness`,
     {
       method: 'POST',
       headers: {
