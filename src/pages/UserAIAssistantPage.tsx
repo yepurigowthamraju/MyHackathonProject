@@ -71,19 +71,19 @@ export const UserAIAssistantPage: React.FC<
       throw new Error('Your login session has expired. Please log in again.');
     }
 
-    const response = await fetch(
-      'http://localhost:3001/api/ai/chat',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          message: question,
-        }),
-      }
-    );
+   const response = await fetch(
+  `${import.meta.env.VITE_API_URL}/api/ai/chat`,
+  {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      message: question,
+    }),
+  }
+);
 
     const data = await response.json();
 
