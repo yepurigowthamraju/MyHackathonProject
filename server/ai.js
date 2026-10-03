@@ -1,5 +1,5 @@
 const GEMINI_API_URL =
-  'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+  'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent';
 
 export async function askAI({
   message,
@@ -174,9 +174,8 @@ Use Markdown formatting when helpful:
             },
           ],
           generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 1000,
-          },
+  maxOutputTokens: 1000,
+},
         }),
       }
     );
