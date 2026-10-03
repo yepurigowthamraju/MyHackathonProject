@@ -142,13 +142,17 @@ Use Markdown formatting when helpful:
 `;
 
   try {
-    const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
 
-    if (!apiKey) {
-      throw new Error('GEMINI_API_KEY is not configured.');
-    }
+  if (!apiKey) {
+    throw new Error('GEMINI_API_KEY is not configured.');
+  }
 
-    const response = await fetch(
+  let response;
+  let lastErrorText = '';
+
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    response = await fetch(
       `${GEMINI_API_URL}?key=${apiKey}`,
       {
         method: 'POST',
@@ -174,37 +178,60 @@ Use Markdown formatting when helpful:
             },
           ],
           generationConfig: {
-  maxOutputTokens: 1000,
-},
+            maxOutputTokens: 1000,
+          },
         }),
       }
     );
 
-    if (!response.ok) {
-      const errorText = await response.text();
-
-      throw new Error(
-        `Gemini request failed (${response.status}): ${errorText}`
-      );
+    if (response.ok) {
+      break;
     }
 
-    const data = await response.json();
+    lastErrorText = await response.text();
 
-    const content =
-      data?.candidates?.[0]?.content?.parts
-        ?.map((part) => part.text || '')
-        .join('')
-        .trim();
+    console.error(
+      `Gemini attempt ${attempt} failed (${response.status}):`,
+      lastErrorText
+    );
 
-    if (!content) {
-      throw new Error(
-        'Gemini returned an empty response.'
-      );
+    if (
+      response.status !== 503 &&
+      response.status !== 429
+    ) {
+      break;
     }
 
-    return content;
-  } catch (error) {
-    console.error('Gemini AI error:', error);
-    throw error;
+    if (attempt < 3) {
+      await new Promise((resolve) =>
+        setTimeout(resolve, attempt * 2000)
+      );
+    }
   }
+
+  if (!response.ok) {
+    throw new Error(
+      `Gemini request failed (${response.status}): ${lastErrorText}`
+    );
+  }
+
+  const data = await response.json();
+
+  const content =
+    data?.candidates?.[0]?.content?.parts
+      ?.map((part) => part.text || '')
+      .join('')
+      .trim();
+
+  if (!content) {
+    throw new Error(
+      'Gemini returned an empty response.'
+    );
+  }
+
+  return content;
+} catch (error) {
+  console.error('Gemini AI error:', error);
+  throw error;
+}
 }
