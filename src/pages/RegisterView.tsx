@@ -51,8 +51,8 @@ export function RegisterView({
     return;
   }
 
-  if (password.length < 6) {
-    setError('Password must contain at least 6 characters.');
+  if (password.length < 6 || !/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) {
+    setError('Password must be at least 6 characters and contain at least 1 letter and 1 number.');
     return;
   }
 

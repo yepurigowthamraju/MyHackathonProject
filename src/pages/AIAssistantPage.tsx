@@ -11,7 +11,10 @@ import {
   Clock, 
   ChevronRight,
   RefreshCw,
-  MessageSquare
+  MessageSquare,
+  Mic,
+  Volume2,
+  VolumeX,
 } from 'lucide-react';
 import { GlassCard } from '../components/common/GlassCard';
 import { cannedPromptSuggestions, mockChatKnowledgeBase, ChatMessage } from '../data/mockChat';
@@ -31,6 +34,8 @@ export const AIAssistantPage: React.FC = () => {
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -40,6 +45,46 @@ export const AIAssistantPage: React.FC = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages, isTyping]);
+
+  const speakText = (text: string) => {
+    if (!("speechSynthesis" in window)) {
+      alert('Speaker output is not supported by this browser. Please use Chrome or Edge.');
+      return;
+    }
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'en-IN';
+    utterance.onstart = () => setIsSpeaking(true);
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => setIsSpeaking(false);
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const stopSpeaking = () => {
+    window.speechSynthesis?.cancel();
+    setIsSpeaking(false);
+  };
+
+  const startVoiceInput = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert('Voice input is not supported by this browser. Please use Chrome or Edge.');
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'en-IN';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    recognition.onstart = () => setIsListening(true);
+    recognition.onend = () => setIsListening(false);
+    recognition.onerror = () => setIsListening(false);
+    recognition.onresult = (event: any) => {
+      const transcript = event.results?.[0]?.[0]?.transcript || '';
+      setInputValue((previous) => `${previous} ${transcript}`.trim());
+    };
+    recognition.start();
+  };
 
 const handleSend = async (text: string) => {
   const question = text.trim();
@@ -180,6 +225,18 @@ const handleSend = async (text: string) => {
 
                 <div className="leading-relaxed whitespace-pre-wrap">{msg.text}</div>
 
+                {msg.sender === 'assistant' && (
+                  <button
+                    type="button"
+                    onClick={() => isSpeaking ? stopSpeaking() : speakText(msg.text)}
+                    className="inline-flex items-center gap-1.5 mt-2 px-2.5 py-1.5 rounded-lg border border-cyan-500/30 bg-cyan-500/5 text-cyan-300 hover:bg-cyan-500/10 text-[10px] font-mono"
+                    title={isSpeaking ? 'Stop speaking' : 'Read response aloud'}
+                  >
+                    {isSpeaking ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+                    {isSpeaking ? 'Stop' : 'Speak'}
+                  </button>
+                )}
+
                 {/* Supporting Metrics if available */}
                 {msg.metrics && msg.metrics.length > 0 && (
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 font-mono">
@@ -278,11 +335,24 @@ const handleSend = async (text: string) => {
           }}
           className="p-3 bg-slate-900/90 border-t border-slate-800 flex items-center gap-3"
         >
+          <button
+            type="button"
+            onClick={startVoiceInput}
+            className={`px-3 py-2.5 rounded-xl border text-xs font-mono transition-colors flex items-center gap-1.5 ${
+              isListening
+                ? 'border-rose-400/60 bg-rose-500/20 text-rose-300 animate-pulse'
+                : 'border-cyan-500/30 bg-slate-950 text-cyan-300 hover:border-cyan-400/60'
+            }`}
+            title="Speak your question"
+          >
+            <Mic className="w-4 h-4" />
+            <span className="hidden sm:inline">{isListening ? 'Listening…' : 'Mic'} </span>
+          </button>
           <input
             type="text"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            placeholder="Type your welfare query (e.g., 'Compare Unit Alpha and Unit Charlie recovery')..."
+            placeholder="Type or use the mic to ask a welfare query..."
             className="flex-1 px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-xs text-slate-200 placeholder-slate-400 focus:outline-none focus:border-cyan-500 font-mono"
           />
           <button

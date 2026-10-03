@@ -1,15 +1,56 @@
-import OpenAI from 'openai';
+const OLLAMA_BASE_URL = (
+  process.env.OLLAMA_BASE_URL || 'http://localhost:11434'
+).replace(/\/$/, '');
 
-function getOpenAIClient() {
-  return new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-  });
-}
+const OLLAMA_MODEL =
+  process.env.OLLAMA_MODEL || 'qwen3:1.7b';
 
-export async function askAI({ message, role, welfareData }) {
-  const systemPrompt =
-    role === 'Personnel User'
+export async function askAI({
+  message,
+  role,
+  welfareData,
+  language = 'English',
+}) {
+  const languageInstruction =
+    language === 'Telugu'
       ? `
+IMPORTANT LANGUAGE RULE:
+
+Respond ONLY in Telugu.
+
+Use natural and easy-to-understand Telugu.
+
+Do not answer in English unless the user specifically asks for English.
+
+Technical terms such as AI, stress, sleep, fatigue, exercise, etc.
+may remain in English when that makes the explanation clearer.
+`
+      : language === 'Hindi'
+      ? `
+IMPORTANT LANGUAGE RULE:
+
+Respond ONLY in Hindi.
+
+Use natural and easy-to-understand Hindi.
+
+Do not answer in English unless the user specifically asks for English.
+
+Technical terms such as AI, stress, sleep, fatigue, exercise, etc.
+may remain in English when that makes the explanation clearer.
+`
+      : `
+IMPORTANT LANGUAGE RULE:
+
+Respond in English.
+`;
+
+  const isPersonnel =
+    role === 'Personnel User';
+
+  const systemPrompt = isPersonnel
+    ? `
+${languageInstruction}
+
 You are the Welfare Intelligence personal wellness assistant.
 
 Help the user with:
@@ -21,11 +62,34 @@ Help the user with:
 
 Give practical, supportive and easy-to-understand answers.
 
+Understand the user's exact question before answering.
+
+For simple questions:
+- Give a short and direct answer.
+
+For complex questions:
+- Give enough explanation to be useful.
+- Use short paragraphs and bullet points when helpful.
+
+Do not unnecessarily create long numbered lists.
+
+Do not repeat the user's question.
+
+Do not make up information.
+
 Do not reveal information about other users or employees.
+
 Do not make medical diagnoses.
-If the user describes an emergency or serious danger, encourage them to contact appropriate human or emergency support.
+
+If the user describes an emergency or serious danger,
+encourage them to contact appropriate human or emergency support.
+
+You have access only to the authorized wellness records
+supplied by the backend.
 `
-      : `
+    : `
+${languageInstruction}
+
 You are the Welfare Intelligence employee welfare assistant.
 
 You assist authorized welfare administrators with:
@@ -34,33 +98,134 @@ You assist authorized welfare administrators with:
 - welfare interventions
 - reports and decision support
 
+Understand the exact question before answering.
+
+Give accurate, relevant and practical answers.
+
+For simple questions:
+- Give a short and direct answer.
+
+For complex questions:
+- Give enough explanation to be useful.
+
+Avoid unnecessary long numbered lists.
+
+Use headings and bullet points only when they improve readability.
+
+Do not make up information.
+
 Protect confidential personnel information.
+
 Do not expose information to unauthorized users.
-Your recommendations are decision support and should include human verification where appropriate.
+
+Do not make medical diagnoses.
+
+Recommendations are decision support and should include
+human verification where appropriate.
 `;
 
-  const response = await getOpenAIClient().responses.create({
-    model: 'gpt-5.6-luna',
-    instructions: systemPrompt,
-   input: `
-You have access to the following authorized wellness records from the Welfare Intelligence database.
+  const prompt = `
+RESPONSE LANGUAGE:
 
-These records are real data provided by the backend for this request.
-You MUST analyze these records when answering the administrator's question.
-Do NOT say that you do not have access to the wellness data if records are present below.
-Do NOT ask the administrator to upload or provide the data again.
+${language}
 
 AUTHORIZED WELLNESS DATA:
-${JSON.stringify(welfareData, null, 2)}
 
-ADMINISTRATOR QUESTION:
+${JSON.stringify(welfareData || [], null, 2)}
+
+USER QUESTION:
+
 ${message}
 
-Use the wellness records above as the primary source for your answer.
-Summarize important patterns, risk levels, stress, fatigue, sleep, mood and energy where relevant.
-If there are only a small number of records, clearly state that the sample is limited and avoid making broad conclusions.
-`,
-  });
+IMPORTANT LANGUAGE REQUIREMENT:
 
-  return response.output_text;
+The final answer MUST be written in ${language}.
+
+If the selected language is Telugu, respond in natural Telugu.
+
+If the selected language is Hindi, respond in natural Hindi.
+
+If the selected language is English, respond in English.
+
+Do not switch to English unless the user specifically asks for English.
+
+Use the authorized wellness data when relevant.
+
+If there are only a small number of records, clearly state
+that the sample is limited and avoid broad conclusions.
+
+Answer the user's question directly.
+
+For simple questions, keep the answer concise.
+
+For complex questions, provide enough explanation to be useful.
+
+Do not unnecessarily repeat information.
+
+Use Markdown formatting when helpful:
+- headings
+- short paragraphs
+- bullet points
+- bold text for important information
+`;
+
+  try {
+    const response = await fetch(
+      `${OLLAMA_BASE_URL}/api/chat`,
+      {
+        method: 'POST',
+
+        headers: {
+          'Content-Type': 'application/json',
+        },
+
+        body: JSON.stringify({
+          model: OLLAMA_MODEL,
+
+          messages: [
+            {
+              role: 'system',
+              content: systemPrompt,
+            },
+            {
+              role: 'user',
+              content: prompt,
+            },
+          ],
+
+          stream: false,
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const errorText =
+        await response.text();
+
+      throw new Error(
+        `Ollama request failed (${response.status}): ${errorText}`
+      );
+    }
+
+    const data =
+      await response.json();
+
+    const content =
+      data?.message?.content?.trim();
+
+    if (!content) {
+      throw new Error(
+        'Ollama returned an empty response.'
+      );
+    }
+
+    return content;
+  } catch (error) {
+    console.error(
+      'Ollama AI error:',
+      error
+    );
+
+    throw error;
+  }
 }

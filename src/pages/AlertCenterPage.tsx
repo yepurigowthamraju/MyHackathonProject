@@ -31,39 +31,33 @@ export const AlertCenterPage: React.FC<AlertCenterPageProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [liveAlerts, setLiveAlerts] = useState<EarlyWarningAlert[]>([]);
   useEffect(() => {
-  const loadAlerts = async () => {
-    try {
-      const token = localStorage.getItem('welfare_token');
+    let cancelled = false;
 
-      if (!token) {
-        return;
+    const loadAlerts = async () => {
+      try {
+        const token = localStorage.getItem('welfare_token');
+        if (!token) return;
+
+        const response = await fetch(`${API_BASE_URL}/api/wellness/alerts`, {
+          headers: { Authorization: `Bearer ${token}` },
+          cache: 'no-store',
+        });
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Failed to load wellness alerts.');
+        if (!cancelled && Array.isArray(data)) setLiveAlerts(data);
+      } catch (error) {
+        console.error('Alerts loading error:', error);
       }
+    };
 
-     const response = await fetch(
-  `${API_BASE_URL}/api/wellness/alerts`,
-  {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data.error || 'Failed to load wellness alerts.'
-        );
-      }
-
-      setLiveAlerts(data);
-    } catch (error) {
-      console.error('Alerts loading error:', error);
-    }
-  };
-
-  loadAlerts();
-}, []);
+    loadAlerts();
+    const interval = window.setInterval(loadAlerts, 5000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
+  }, []);
 
   const filteredAlerts = liveAlerts.filter(a => {
     const matchesSeverity = 

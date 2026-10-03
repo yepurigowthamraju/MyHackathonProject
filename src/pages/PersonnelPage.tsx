@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { API_BASE_URL } from '../config/api';
 import { 
   Users, 
   Search, 
@@ -32,6 +33,29 @@ export const PersonnelPage: React.FC<PersonnelPageProps> = ({
   const [selectedRisk, setSelectedRisk] = useState('All');
   const [sortBy, setSortBy] = useState<'id' | 'wellness' | 'stress' | 'fatigue'>('wellness');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [videos, setVideos] = useState<Array<{id: string; personnelId: string; personnelName: string; unit: string; fileName: string; mimeType: string; dataUrl: string; analysisStatus: string; createdAt: string}>>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadVideos = async () => {
+      const token = localStorage.getItem('welfare_token');
+      if (!token) return;
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/wellness/videos`, {
+          headers: { Authorization: `Bearer ${token}` },
+          cache: 'no-store',
+        });
+        if (!response.ok) return;
+        const data = await response.json();
+        if (!cancelled && Array.isArray(data)) setVideos(data);
+      } catch {
+        // Keep personnel directory available if video endpoint is temporarily unavailable.
+      }
+    };
+    loadVideos();
+    const interval = window.setInterval(loadVideos, 5000);
+    return () => { cancelled = true; window.clearInterval(interval); };
+  }, []);
 
   const filtered = personnelList.filter(p => {
     const matchesSearch = 
@@ -63,6 +87,37 @@ export const PersonnelPage: React.FC<PersonnelPageProps> = ({
 
   return (
     <div className="space-y-6 pb-12">
+      {/* User-submitted video sensor feed */}
+      <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-5">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+          <div>
+            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <Activity className="w-5 h-5 text-cyan-400" />
+              User Video Sensor Feed
+            </h2>
+            <p className="text-xs text-slate-400 mt-1">Videos uploaded by personnel appear here automatically. Feed refreshes every 5 seconds.</p>
+          </div>
+          <span className="text-xs font-mono text-cyan-300 border border-cyan-500/20 rounded-lg px-3 py-1.5">{videos.length} submitted</span>
+        </div>
+        {videos.length === 0 ? (
+          <div className="rounded-xl border border-slate-800 p-8 text-center text-sm text-slate-500">No personnel videos have been uploaded yet.</div>
+        ) : (
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+            {videos.map(video => (
+              <div key={video.id} className="rounded-xl border border-slate-800 bg-slate-900/70 p-3">
+                <video controls preload="metadata" src={video.dataUrl} className="w-full rounded-lg max-h-72 bg-black" />
+                <div className="mt-3 flex flex-col gap-1">
+                  <div className="flex items-center justify-between gap-3"><span className="font-semibold text-white truncate">{video.personnelName}</span><span className="text-[10px] font-mono text-amber-300">Analysis: {video.analysisStatus}</span></div>
+                  <div className="text-xs text-slate-400">{video.personnelId} • {video.unit}</div>
+                  <div className="text-xs text-slate-500 truncate">{video.fileName}</div>
+                  <div className="text-[10px] text-slate-600">Uploaded {new Date(video.createdAt).toLocaleString()}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>

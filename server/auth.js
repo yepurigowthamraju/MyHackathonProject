@@ -113,9 +113,9 @@ export async function loginUser({
     .prepare(
       `SELECT *
        FROM users
-       WHERE personnel_id = ?`
+       WHERE personnel_id = ? OR LOWER(name) = LOWER(?)`
     )
-    .get(personnelId);
+    .get(personnelId, personnelId);
 
   if (!user) {
     throw new Error(

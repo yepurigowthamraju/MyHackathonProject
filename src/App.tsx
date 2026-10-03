@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Sidebar, NavItem } from './components/layout/Sidebar';
 import { TopNavbar } from './components/layout/TopNavbar';
 import { MobileDrawer } from './components/layout/MobileDrawer';
@@ -29,6 +29,7 @@ import { mockAlertsList } from './data/mockAlerts';
 import { mockInterventionsList } from './data/mockInterventions';
 import { PersonnelRecord, EarlyWarningAlert, WelfareIntervention, WelfareReport, UserProfile, WellnessUpdate } from './types';
 import { soundFx } from './utils/soundEffects';
+import { API_BASE_URL } from './config/api';
 
 import { 
   CheckCircle2, 
@@ -74,7 +75,7 @@ export function App() {
 
   // Core Data State (allows live interactions)
   const [personnelList, setPersonnelList] = useState<PersonnelRecord[]>(mockPersonnelList);
-  const [alerts, setAlerts] = useState<EarlyWarningAlert[]>(mockAlertsList);
+  const [alerts, setAlerts] = useState<EarlyWarningAlert[]>([]);
   const [interventions, setInterventions] = useState<WelfareIntervention[]>(mockInterventionsList);
 
   // Personnel wellness submissions
@@ -124,6 +125,79 @@ const [wellnessUpdates, setWellnessUpdates] = useState<import('./types').Wellnes
 
     return () => clearInterval(interval);
   }, [isSimulatingLive]);
+
+  // Near-real-time alert polling for Welfare Administrators.
+  // The backend is queried every 5 seconds so newly submitted high/moderate
+  // wellness records can appear in the Alerts feed without refreshing the page.
+  const knownRealAlertIds = useRef<Set<string>>(new Set());
+  const initialRealAlertsLoaded = useRef(false);
+
+  useEffect(() => {
+    if (!isAuthenticated || currentUser?.role !== 'Welfare Administrator') return;
+
+    let cancelled = false;
+
+    const loadLiveAlerts = async () => {
+      const token = localStorage.getItem('welfare_token');
+      if (!token) return;
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/wellness/alerts`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (!response.ok) return;
+
+        const liveAlerts = await response.json();
+        if (cancelled || !Array.isArray(liveAlerts)) return;
+
+        const isInitialLoad = !initialRealAlertsLoaded.current;
+        const newAlerts = liveAlerts.filter((item: any) => !knownRealAlertIds.current.has(String(item.id)));
+        liveAlerts.forEach((item: any) => knownRealAlertIds.current.add(String(item.id)));
+
+        const normalized = liveAlerts.map((item: any): EarlyWarningAlert => ({
+          id: String(item.id),
+          severity: item.severity === 'High' ? 'Critical' : item.severity === 'Moderate' ? 'Moderate' : 'Info',
+          title: item.title || 'Wellness Risk Detected',
+          description: item.description || 'A new wellness risk was detected.',
+          affectedGroup: item.affectedGroup || item.personnelId || 'Personnel',
+          timestamp: item.timestamp || 'Just now',
+          status: item.status || 'Active',
+          aiConfidence: item.aiConfidence ?? 80,
+          recommendedAction: item.recommendedAction || 'Review the personnel wellness record and initiate appropriate support.',
+          riskType:
+            item.riskType === 'Fatigue Accumulation'
+              ? 'Fatigue Accumulation'
+              : item.riskType === 'Recovery Depletion'
+                ? 'Recovery Depletion'
+                : item.riskType === 'Shift Overload'
+                  ? 'Shift Overload'
+                  : item.riskType === 'Recovery Improvement'
+                    ? 'Recovery Improvement'
+                    : 'Elevated Stress Pattern',
+          isNew: !isInitialLoad && newAlerts.some((newItem: any) => String(newItem.id) === String(item.id)),
+        }));
+
+        setAlerts(normalized);
+
+        if (!isInitialLoad && newAlerts.length > 0) {
+          soundFx.playAlert();
+          showToast(`Real-time alert: ${newAlerts[0].title}`, 'alert');
+        }
+        initialRealAlertsLoaded.current = true;
+      } catch {
+        // Keep the existing dashboard data if the backend is temporarily unavailable.
+      }
+    };
+
+    loadLiveAlerts();
+    const interval = window.setInterval(loadLiveAlerts, 5000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
+  }, [isAuthenticated, currentUser?.role]);
 
   // Handler: Update Alert Status
   const handleUpdateAlertStatus = (alertId: string, newStatus: EarlyWarningAlert['status']) => {
@@ -195,7 +269,7 @@ const [wellnessUpdates, setWellnessUpdates] = useState<import('./types').Wellnes
     },
     Alerts: {
       title: 'Early Warning Alert Dispatch',
-      subtitle: 'Automated triage and escalation feed for personnel stress spikes'
+      subtitle: 'Near-real-time triage and escalation feed • auto-refreshes every 5 seconds'
     },
     InterventionCenter: {
       title: 'Welfare Intervention Management',
@@ -215,7 +289,7 @@ const [wellnessUpdates, setWellnessUpdates] = useState<import('./types').Wellnes
     }
   };
 
-  const unackAlerts = alerts.filter(a => a.status === 'Active').length;
+  const unackAlerts = alerts.filter(a => a.status === 'Active' && a.isNew).length;
   const pendingInterventions = interventions.filter(i => i.status === 'Recommended' || i.status === 'Scheduled').length;
 
   // Reusable NavItems array

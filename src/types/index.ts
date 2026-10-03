@@ -47,6 +47,7 @@ export interface EarlyWarningAlert {
   aiConfidence: number;
   recommendedAction: string;
   riskType: 'Elevated Stress Pattern' | 'Fatigue Accumulation' | 'Recovery Depletion' | 'Shift Overload' | 'Recovery Improvement';
+  isNew?: boolean;
 }
 
 export interface WelfareIntervention {

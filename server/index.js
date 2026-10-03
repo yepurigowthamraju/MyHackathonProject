@@ -30,7 +30,7 @@ app.use(
 );
 
 
-app.use(express.json());
+app.use(express.json({ limit: '25mb' }));
 
 /* -------------------------
    HEALTH CHECK
@@ -84,10 +84,18 @@ app.post(
         });
       }
 
-      if (password.length < 6) {
+      // Employee/Welfare Administrator accounts are provisioned by authorized
+      // administrators and cannot be created from the public registration form.
+      if (role === 'Welfare Administrator') {
+        return res.status(403).json({
+          error: 'Employee accounts cannot be self-registered. Please contact the system administrator.',
+        });
+      }
+
+      if (password.length < 6 || !/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) {
         return res.status(400).json({
           error:
-            'Password must contain at least 6 characters.',
+            'Password must be at least 6 characters and contain at least 1 letter and 1 number.',
         });
       }
 
@@ -134,7 +142,7 @@ app.post(
       if (!personnelId || !password) {
         return res.status(400).json({
           error:
-            'Personnel ID and password are required.',
+            'Personnel ID or name and password are required.',
         });
       }
 
@@ -176,7 +184,10 @@ app.get(
 
 app.post('/api/ai/chat', verifyToken, async (req, res) => {
   try {
-    const { message } = req.body;
+    const {
+  message,
+  language = 'English',
+} = req.body;
 
     if (!message || !message.trim()) {
       return res.status(400).json({
@@ -239,6 +250,7 @@ const response = await askAI({
   message: message.trim(),
   role: req.user.role,
   welfareData,
+  language,
 });
 
     res.json({
@@ -252,6 +264,98 @@ const response = await askAI({
     });
   }
 });
+/* -------------------------
+   USER VIDEO SENSOR
+------------------------- */
+
+app.post('/api/wellness/videos', verifyToken, (req, res) => {
+  try {
+    if (req.user.role !== 'Personnel User') {
+      return res.status(403).json({ error: 'Only personnel users can upload wellness videos.' });
+    }
+
+    const { fileName, mimeType, dataUrl } = req.body || {};
+
+    if (!fileName || !mimeType || !dataUrl) {
+      return res.status(400).json({ error: 'Video file data is required.' });
+    }
+
+    if (!mimeType.startsWith('video/')) {
+      return res.status(400).json({ error: 'Only video files are allowed.' });
+    }
+
+    if (!String(dataUrl).startsWith('data:video/')) {
+      return res.status(400).json({ error: 'Invalid video data.' });
+    }
+
+    // Keep the deployed API payload bounded. A short video is recommended.
+    if (String(dataUrl).length > 20 * 1024 * 1024) {
+      return res.status(413).json({ error: 'Video is too large. Please upload a short video under 15 MB.' });
+    }
+
+    const result = db.prepare(`
+      INSERT INTO wellness_videos (personnel_id, file_name, mime_type, data_url, analysis_status)
+      VALUES (?, ?, ?, ?, 'Pending')
+    `).run(req.user.personnelId, String(fileName).slice(0, 180), mimeType, dataUrl);
+
+    res.status(201).json({
+      message: 'Video uploaded successfully.',
+      id: String(result.lastInsertRowid),
+      analysisStatus: 'Pending',
+    });
+  } catch (error) {
+    console.error('Video upload error:', error);
+    res.status(500).json({ error: 'Failed to upload video.' });
+  }
+});
+
+app.get('/api/wellness/videos/mine', verifyToken, (req, res) => {
+  try {
+    if (req.user.role !== 'Personnel User') {
+      return res.status(403).json({ error: 'Only personnel users can access their own videos.' });
+    }
+
+    const videos = db.prepare(`
+      SELECT id, personnel_id AS personnelId, file_name AS fileName, mime_type AS mimeType,
+             data_url AS dataUrl, analysis_status AS analysisStatus, created_at AS createdAt
+      FROM wellness_videos
+      WHERE personnel_id = ?
+      ORDER BY id DESC
+      LIMIT 10
+    `).all(req.user.personnelId);
+
+    res.json(videos);
+  } catch (error) {
+    console.error('User videos error:', error);
+    res.status(500).json({ error: 'Failed to load your videos.' });
+  }
+});
+
+app.get('/api/wellness/videos', verifyToken, (req, res) => {
+  try {
+    if (req.user.role !== 'Welfare Administrator') {
+      return res.status(403).json({ error: 'You are not authorized to access personnel videos.' });
+    }
+
+    const videos = db.prepare(`
+      SELECT v.id, v.personnel_id AS personnelId,
+             COALESCE(u.name, v.personnel_id) AS personnelName,
+             COALESCE(u.unit, '') AS unit,
+             v.file_name AS fileName, v.mime_type AS mimeType, v.data_url AS dataUrl,
+             v.analysis_status AS analysisStatus, v.created_at AS createdAt
+      FROM wellness_videos v
+      LEFT JOIN users u ON u.personnel_id = v.personnel_id
+      ORDER BY v.id DESC
+      LIMIT 50
+    `).all();
+
+    res.json(videos);
+  } catch (error) {
+    console.error('Personnel videos error:', error);
+    res.status(500).json({ error: 'Failed to load personnel videos.' });
+  }
+});
+
 /* -------------------------
    WELLNESS UPDATE
 ------------------------- */
@@ -469,132 +573,10 @@ app.get('/api/wellness/alerts', verifyToken, (req, res) => {
     const alerts = db
       .prepare(`
         SELECT
+          id,
           personnel_id,
           date,
-          stress_level,
-          fatigue_level,
-          sleep_hours,
-          mood,
-          energy_level,
-          ai_risk,
-          ai_confidence,
-          human_verification
-        FROM wellness_updates
-        WHERE ai_risk IN ('Moderate', 'High')
-        ORDER BY date DESC
-        LIMIT 20
-      `)
-      .all();
-
-    const formattedAlerts = alerts.map((item, index) => ({
-      id: `REAL-ALERT-${index}-${item.personnel_id}`,
-      severity: item.ai_risk,
-      title: `${item.ai_risk} wellness risk detected`,
-      timestamp: new Date(item.date).toLocaleString(),
-      description:
-        `Personnel ${item.personnel_id} recorded stress ${item.stress_level}/10, ` +
-        `fatigue ${item.fatigue_level}/10, sleep ${item.sleep_hours} hours, ` +
-        `mood ${item.mood}, and energy ${item.energy_level}/10.`,
-      affectedGroup: item.personnel_id,
-      aiConfidence: item.ai_confidence,
-      humanVerification: item.human_verification,
-    }));
-
-    res.json(formattedAlerts);
-  } catch (error) {
-    console.error('Wellness alerts error:', error);
-
-    res.status(500).json({
-      error: 'Failed to load wellness alerts.',
-    });
-  }
-});
-app.get('/api/wellness/trends', verifyToken, (req, res) => {
-  try {
-    if (req.user.role !== 'Welfare Administrator') {
-      return res.status(403).json({
-        error: 'You are not authorized to access wellness trends.',
-      });
-    }
-
-    const trends = db
-      .prepare(`
-        SELECT
-          date,
-          ROUND(AVG(stress_level), 1) AS avgStress,
-          ROUND(AVG(fatigue_level), 1) AS fatigue,
-          ROUND(AVG(energy_level), 1) AS recovery
-        FROM wellness_updates
-        GROUP BY date
-        ORDER BY date ASC
-        LIMIT 30
-      `)
-      .all();
-
-    res.json(trends);
-  } catch (error) {
-    console.error('Wellness trends error:', error);
-
-    res.status(500).json({
-      error: 'Failed to load wellness trends.',
-    });
-  }
-});
-app.get('/api/wellness/personnel', verifyToken, (req, res) => {
-  try {
-    if (req.user.role !== 'Welfare Administrator') {
-      return res.status(403).json({
-        error: 'You are not authorized to access personnel wellness data.',
-      });
-    }
-
-    const personnel = db
-      .prepare(`
-        SELECT
-          personnel_id,
-          MAX(date) AS last_check_in,
-          ROUND(AVG(sleep_hours), 1) AS average_sleep,
-          ROUND(AVG(stress_level), 1) AS average_stress,
-          ROUND(AVG(fatigue_level), 1) AS average_fatigue,
-          ROUND(AVG(energy_level), 1) AS average_energy,
-          ai_risk,
-          ai_confidence,
-          human_verification
-        FROM wellness_updates
-        GROUP BY personnel_id
-        ORDER BY
-          CASE ai_risk
-            WHEN 'High' THEN 1
-            WHEN 'Moderate' THEN 2
-            WHEN 'Low' THEN 3
-            ELSE 4
-          END,
-          last_check_in DESC
-      `)
-      .all();
-
-    res.json(personnel);
-  } catch (error) {
-    console.error('Personnel wellness error:', error);
-
-    res.status(500).json({
-      error: 'Failed to load personnel wellness data.',
-    });
-  }
-});
-app.get('/api/wellness/alerts', verifyToken, (req, res) => {
-  try {
-    if (req.user.role !== 'Welfare Administrator') {
-      return res.status(403).json({
-        error: 'You are not authorized to access welfare alerts.',
-      });
-    }
-
-    const alerts = db
-      .prepare(`
-        SELECT
-          personnel_id,
-          date,
+          created_at,
           stress_level,
           fatigue_level,
           sleep_hours,
@@ -611,14 +593,14 @@ app.get('/api/wellness/alerts', verifyToken, (req, res) => {
       .all();
 
     const formattedAlerts = alerts.map((item, index) => ({
-      id: `REAL-ALERT-${index + 1}`,
+      id: `REAL-ALERT-${item.id}`,
       severity: item.ai_risk,
       status: 'Active',
       riskType:
         item.ai_risk === 'High'
           ? 'High Wellness Risk'
           : 'Elevated Wellness Risk',
-      timestamp: new Date(item.date).toLocaleString(),
+      timestamp: new Date(item.created_at || item.date).toLocaleString(),
       title:
         item.ai_risk === 'High'
           ? 'High Wellness Risk Detected'
@@ -629,6 +611,7 @@ app.get('/api/wellness/alerts', verifyToken, (req, res) => {
         `sleep ${item.sleep_hours} hours, mood ${item.mood}, ` +
         `and energy ${item.energy_level}/10.`,
       affectedGroup: item.personnel_id,
+      createdAt: item.created_at,
       aiConfidence: item.ai_confidence ?? 80,
       recommendedAction:
         item.ai_risk === 'High'

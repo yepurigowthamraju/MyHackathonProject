@@ -1,0 +1,61 @@
+warning: in the working copy of 'package-lock.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'package.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'server/ai.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'server/auth.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'server/database.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'server/index.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/App.css', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/App.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/assets/vite.svg', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/common/Badge.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/common/GlassCard.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/common/JudgePitchModal.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/common/Logo.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/common/NeuralCanvas.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/common/Sparkline.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/layout/MobileDrawer.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/layout/Sidebar.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/layout/TopNavbar.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/modals/AlertInvestigateModal.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/modals/ExportReportModal.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/modals/PersonnelModal.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/modals/ScheduleCheckInModal.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/data/authUsers.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/data/mockAlerts.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/data/mockAnalytics.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/data/mockChat.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/data/mockInterventions.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/data/mockPersonnel.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/index.css', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/main.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/pages/AIAssistantPage.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/pages/AIRiskPage.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/pages/AlertCenterPage.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/pages/FatigueMonitoringPage.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/pages/InterventionCenterPage.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/pages/LoginView.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/pages/OverviewPage.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/pages/PersonnelPage.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/pages/RegisterView.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/pages/ReportsInsightsPage.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/pages/SettingsPage.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/pages/StressAnalyticsPage.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/pages/UserAIAssistantPage.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/pages/UserDashboardPage.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/pages/WelfareSupportPage.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/types/index.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/soundEffects.ts', LF will be replaced by CRLF the next time Git touches it
+ package.json                      |   3 [32m+[m
+ server/auth.js                    |   4 [32m+[m[31m-[m
+ server/database.js                |  10 [32m+[m
+ server/index.js                   | 239 [32m+++++[m[31m------[m
+ src/App.tsx                       |  82 [32m+++[m[31m-[m
+ src/pages/AIAssistantPage.tsx     |  74 [32m+++[m[31m-[m
+ src/pages/AlertCenterPage.tsx     |  58 [32m++[m[31m-[m
+ src/pages/LoginView.tsx           |  49 [32m+[m[31m--[m
+ src/pages/PersonnelPage.tsx       |  57 [32m++[m[31m-[m
+ src/pages/RegisterView.tsx        |   4 [32m+[m[31m-[m
+ src/pages/UserAIAssistantPage.tsx |  42 [32m+[m[31m-[m
+ src/pages/UserDashboardPage.tsx   | 826 [32m++++++++++[m[31m----------------------------[m
+ src/types/index.ts                |   1 [32m+[m
+ 13 files changed, 623 insertions(+), 826 deletions(-)

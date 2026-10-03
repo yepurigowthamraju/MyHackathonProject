@@ -49,6 +49,16 @@ db.exec(`
     response TEXT NOT NULL,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
   );
+
+  CREATE TABLE IF NOT EXISTS wellness_videos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    personnel_id TEXT NOT NULL,
+    file_name TEXT NOT NULL,
+    mime_type TEXT NOT NULL,
+    data_url TEXT NOT NULL,
+    analysis_status TEXT DEFAULT 'Pending',
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+  );
 `);
 
 export default db;

@@ -1,7 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { API_BASE_URL } from '../config/api';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import {
   Bot,
+  Mic,
   Send,
   User,
   Sparkles,
@@ -33,8 +36,54 @@ export const UserAIAssistantPage: React.FC<
 
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [isListening, setIsListening] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const speakText = (text: string) => {
+    if (!('speechSynthesis' in window)) return;
+
+    window.speechSynthesis.cancel();
+
+    window.speechSynthesis.speak(
+      new SpeechSynthesisUtterance(text)
+    );
+  };
+
+  const startVoiceInput = () => {
+    const SpeechRecognition =
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      alert(
+        'Voice input is not supported by this browser. Please use Chrome or Edge.'
+      );
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+
+    recognition.lang = 'en-IN';
+    recognition.interimResults = false;
+
+    recognition.onstart = () => setIsListening(true);
+
+    recognition.onend = () => setIsListening(false);
+
+    recognition.onerror = () => setIsListening(false);
+
+    recognition.onresult = (event: any) => {
+      const transcript =
+        event.results?.[0]?.[0]?.transcript || '';
+
+      setInput((previous) =>
+        `${previous} ${transcript}`.trim()
+      );
+    };
+
+    recognition.start();
+  };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({
@@ -42,86 +91,89 @@ export const UserAIAssistantPage: React.FC<
     });
   }, [messages, isTyping]);
 
-  
+  const handleSend = async () => {
+    const question = input.trim();
 
- const handleSend = async () => {
-  const question = input.trim();
-
-  if (!question || isTyping) {
-    return;
-  }
-
-  const userMessage: ChatMessage = {
-    id: `user-${Date.now()}`,
-    sender: 'user',
-    text: question,
-  };
-
-  setMessages((previous) => [
-    ...previous,
-    userMessage,
-  ]);
-
-  setInput('');
-  setIsTyping(true);
-
-  try {
-    const token = localStorage.getItem('welfare_token');
-
-    if (!token) {
-      throw new Error('Your login session has expired. Please log in again.');
+    if (!question || isTyping) {
+      return;
     }
 
-   const response = await fetch(
-  `${API_BASE_URL}/api/ai/chat`,
-  {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({
-      message: question,
-    }),
-  }
-);
+    const userMessage: ChatMessage = {
+      id: `user-${Date.now()}`,
+      sender: 'user',
+      text: question,
+    };
 
-    const data = await response.json();
+    setMessages((previous) => [
+      ...previous,
+      userMessage,
+    ]);
 
-    if (!response.ok) {
-      throw new Error(
-        data.error || 'AI assistant failed to respond.'
+    setInput('');
+    setIsTyping(true);
+
+    try {
+      const token = localStorage.getItem('welfare_token');
+
+      if (!token) {
+        throw new Error(
+          'Your login session has expired. Please log in again.'
+        );
+      }
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/ai/chat`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+      body: JSON.stringify({
+  message: question,
+  language:
+    localStorage.getItem('welfare_language') ||
+    'English',
+}),
+        }
       );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.error || 'AI assistant failed to respond.'
+        );
+      }
+
+      const assistantMessage: ChatMessage = {
+        id: `assistant-${Date.now()}`,
+        sender: 'assistant',
+        text: data.response,
+      };
+
+      setMessages((previous) => [
+        ...previous,
+        assistantMessage,
+      ]);
+    } catch (err) {
+      const assistantMessage: ChatMessage = {
+        id: `assistant-error-${Date.now()}`,
+        sender: 'assistant',
+        text:
+          err instanceof Error
+            ? err.message
+            : 'Sorry, I could not connect to the AI assistant.',
+      };
+
+      setMessages((previous) => [
+        ...previous,
+        assistantMessage,
+      ]);
+    } finally {
+      setIsTyping(false);
     }
-
-    const assistantMessage: ChatMessage = {
-      id: `assistant-${Date.now()}`,
-      sender: 'assistant',
-      text: data.response,
-    };
-
-    setMessages((previous) => [
-      ...previous,
-      assistantMessage,
-    ]);
-  } catch (err) {
-    const assistantMessage: ChatMessage = {
-      id: `assistant-error-${Date.now()}`,
-      sender: 'assistant',
-      text:
-        err instanceof Error
-          ? err.message
-          : 'Sorry, I could not connect to the AI assistant.',
-    };
-
-    setMessages((previous) => [
-      ...previous,
-      assistantMessage,
-    ]);
-  } finally {
-    setIsTyping(false);
-  }
-};
+  };
 
   const suggestions = [
     'How can I reduce stress?',
@@ -132,13 +184,10 @@ export const UserAIAssistantPage: React.FC<
 
   return (
     <div className="min-h-screen bg-[#070b14] text-slate-100 p-4 md:p-8">
-
       {/* HEADER */}
 
       <div className="max-w-5xl mx-auto">
-
         <div className="flex items-center gap-4 mb-6">
-
           <button
             type="button"
             onClick={onBack}
@@ -160,17 +209,14 @@ export const UserAIAssistantPage: React.FC<
               Immediate general welfare guidance when an employee is unavailable
             </p>
           </div>
-
         </div>
 
         {/* CHAT CARD */}
 
         <div className="rounded-2xl border border-cyan-500/20 bg-slate-900/70 overflow-hidden">
-
           {/* STATUS */}
 
           <div className="px-5 py-3 border-b border-slate-800 flex items-center gap-2">
-
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
 
             <span className="text-xs font-mono text-emerald-400">
@@ -178,15 +224,12 @@ export const UserAIAssistantPage: React.FC<
             </span>
 
             <Sparkles className="w-4 h-4 text-cyan-400 ml-auto" />
-
           </div>
 
           {/* MESSAGES */}
 
           <div className="h-[55vh] overflow-y-auto p-5 space-y-5">
-
             {messages.map((message) => (
-
               <div
                 key={message.id}
                 className={`flex gap-3 ${
@@ -195,7 +238,6 @@ export const UserAIAssistantPage: React.FC<
                     : 'justify-start'
                 }`}
               >
-
                 {message.sender === 'assistant' && (
                   <div className="w-9 h-9 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center flex-shrink-0">
                     <Bot className="w-4 h-4 text-cyan-400" />
@@ -209,7 +251,26 @@ export const UserAIAssistantPage: React.FC<
                       : 'bg-slate-950/80 border border-slate-800 text-slate-200'
                   }`}
                 >
-                  {message.text}
+                  {message.sender === 'assistant' ? (
+                    <div className="prose prose-invert prose-sm max-w-none leading-6">
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                      >
+                        {message.text}
+                      </ReactMarkdown>
+
+                      <button
+                        type="button"
+                        onClick={() => speakText(message.text)}
+                        className="mt-3 text-cyan-400 hover:text-cyan-300"
+                        title="Speak response"
+                      >
+                        🔊
+                      </button>
+                    </div>
+                  ) : (
+                    <div>{message.text}</div>
+                  )}
                 </div>
 
                 {message.sender === 'user' && (
@@ -217,14 +278,11 @@ export const UserAIAssistantPage: React.FC<
                     <User className="w-4 h-4 text-violet-300" />
                   </div>
                 )}
-
               </div>
-
             ))}
 
             {isTyping && (
               <div className="flex gap-3">
-
                 <div className="w-9 h-9 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center">
                   <Bot className="w-4 h-4 text-cyan-400" />
                 </div>
@@ -232,18 +290,15 @@ export const UserAIAssistantPage: React.FC<
                 <div className="rounded-xl bg-slate-950 border border-slate-800 px-4 py-3 text-xs text-slate-400">
                   AI is preparing a response...
                 </div>
-
               </div>
             )}
 
             <div ref={messagesEndRef} />
-
           </div>
 
           {/* SUGGESTIONS */}
 
           <div className="px-5 pb-4 flex flex-wrap gap-2">
-
             {suggestions.map((suggestion) => (
               <button
                 type="button"
@@ -254,7 +309,6 @@ export const UserAIAssistantPage: React.FC<
                 {suggestion}
               </button>
             ))}
-
           </div>
 
           {/* INPUT */}
@@ -266,6 +320,19 @@ export const UserAIAssistantPage: React.FC<
             }}
             className="p-4 border-t border-slate-800 flex gap-3"
           >
+            <button
+              type="button"
+              onClick={startVoiceInput}
+              disabled={isTyping}
+              className={`px-4 rounded-xl border ${
+                isListening
+                  ? 'border-rose-400 bg-rose-500/10 text-rose-300'
+                  : 'border-slate-700 text-slate-300 hover:border-cyan-500/50'
+              }`}
+              title="Voice input"
+            >
+              <Mic className="w-5 h-5" />
+            </button>
 
             <input
               value={input}
@@ -284,15 +351,12 @@ export const UserAIAssistantPage: React.FC<
             >
               <Send className="w-5 h-5" />
             </button>
-
           </form>
-
         </div>
 
         {/* NOTICE */}
 
         <div className="mt-5 rounded-xl border border-slate-800 bg-slate-900/40 p-4 flex items-start gap-3">
-
           <ShieldCheck className="w-5 h-5 text-cyan-400 flex-shrink-0" />
 
           <p className="text-xs text-slate-500 leading-5">
@@ -302,11 +366,8 @@ export const UserAIAssistantPage: React.FC<
             the Welfare & Support team when human intervention
             is required.
           </p>
-
         </div>
-
       </div>
-
     </div>
   );
 };
