@@ -1,9 +1,5 @@
-const OLLAMA_BASE_URL = (
-  process.env.OLLAMA_BASE_URL || 'http://localhost:11434'
-).replace(/\/$/, '');
-
-const OLLAMA_MODEL =
-  process.env.OLLAMA_MODEL || 'qwen3:1.7b';
+const GEMINI_API_URL =
+  'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
 
 export async function askAI({
   message,
@@ -15,37 +11,27 @@ export async function askAI({
     language === 'Telugu'
       ? `
 IMPORTANT LANGUAGE RULE:
-
 Respond ONLY in Telugu.
-
 Use natural and easy-to-understand Telugu.
-
 Do not answer in English unless the user specifically asks for English.
-
 Technical terms such as AI, stress, sleep, fatigue, exercise, etc.
 may remain in English when that makes the explanation clearer.
 `
       : language === 'Hindi'
-      ? `
+        ? `
 IMPORTANT LANGUAGE RULE:
-
 Respond ONLY in Hindi.
-
 Use natural and easy-to-understand Hindi.
-
 Do not answer in English unless the user specifically asks for English.
-
 Technical terms such as AI, stress, sleep, fatigue, exercise, etc.
 may remain in English when that makes the explanation clearer.
 `
-      : `
+        : `
 IMPORTANT LANGUAGE RULE:
-
 Respond in English.
 `;
 
-  const isPersonnel =
-    role === 'Personnel User';
+  const isPersonnel = role === 'Personnel User';
 
   const systemPrompt = isPersonnel
     ? `
@@ -72,13 +58,9 @@ For complex questions:
 - Use short paragraphs and bullet points when helpful.
 
 Do not unnecessarily create long numbered lists.
-
 Do not repeat the user's question.
-
 Do not make up information.
-
 Do not reveal information about other users or employees.
-
 Do not make medical diagnoses.
 
 If the user describes an emergency or serious danger,
@@ -109,15 +91,11 @@ For complex questions:
 - Give enough explanation to be useful.
 
 Avoid unnecessary long numbered lists.
-
 Use headings and bullet points only when they improve readability.
 
 Do not make up information.
-
 Protect confidential personnel information.
-
 Do not expose information to unauthorized users.
-
 Do not make medical diagnoses.
 
 Recommendations are decision support and should include
@@ -126,25 +104,19 @@ human verification where appropriate.
 
   const prompt = `
 RESPONSE LANGUAGE:
-
 ${language}
 
 AUTHORIZED WELLNESS DATA:
-
 ${JSON.stringify(welfareData || [], null, 2)}
 
 USER QUESTION:
-
 ${message}
 
 IMPORTANT LANGUAGE REQUIREMENT:
-
 The final answer MUST be written in ${language}.
 
 If the selected language is Telugu, respond in natural Telugu.
-
 If the selected language is Hindi, respond in natural Hindi.
-
 If the selected language is English, respond in English.
 
 Do not switch to English unless the user specifically asks for English.
@@ -170,62 +142,70 @@ Use Markdown formatting when helpful:
 `;
 
   try {
+    const apiKey = process.env.GEMINI_API_KEY;
+
+    if (!apiKey) {
+      throw new Error('GEMINI_API_KEY is not configured.');
+    }
+
     const response = await fetch(
-      `${OLLAMA_BASE_URL}/api/chat`,
+      `${GEMINI_API_URL}?key=${apiKey}`,
       {
         method: 'POST',
-
         headers: {
           'Content-Type': 'application/json',
         },
-
         body: JSON.stringify({
-          model: OLLAMA_MODEL,
-
-          messages: [
-            {
-              role: 'system',
-              content: systemPrompt,
-            },
+          systemInstruction: {
+            parts: [
+              {
+                text: systemPrompt,
+              },
+            ],
+          },
+          contents: [
             {
               role: 'user',
-              content: prompt,
+              parts: [
+                {
+                  text: prompt,
+                },
+              ],
             },
           ],
-
-          stream: false,
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 1000,
+          },
         }),
       }
     );
 
     if (!response.ok) {
-      const errorText =
-        await response.text();
+      const errorText = await response.text();
 
       throw new Error(
-        `Ollama request failed (${response.status}): ${errorText}`
+        `Gemini request failed (${response.status}): ${errorText}`
       );
     }
 
-    const data =
-      await response.json();
+    const data = await response.json();
 
     const content =
-      data?.message?.content?.trim();
+      data?.candidates?.[0]?.content?.parts
+        ?.map((part) => part.text || '')
+        .join('')
+        .trim();
 
     if (!content) {
       throw new Error(
-        'Ollama returned an empty response.'
+        'Gemini returned an empty response.'
       );
     }
 
     return content;
   } catch (error) {
-    console.error(
-      'Ollama AI error:',
-      error
-    );
-
+    console.error('Gemini AI error:', error);
     throw error;
   }
 }
