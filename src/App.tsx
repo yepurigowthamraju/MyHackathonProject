@@ -50,7 +50,155 @@ import {
   Bot, 
   Settings 
 } from 'lucide-react';
+const EMPLOYEE_THEME_STYLES = `
+  /* =================================
+     EMPLOYEE LIGHT THEME
+     WHITE + ORANGE
+  ================================= */
 
+  .employee-dashboard.theme-light {
+    background: #fffaf5 !important;
+    color: #3b2a20 !important;
+  }
+
+  /* Main background */
+  .employee-dashboard.theme-light .bg-slate-950,
+  .employee-dashboard.theme-light .bg-slate-900 {
+    background: #fffaf5 !important;
+  }
+
+  /* Sidebar */
+  .employee-dashboard.theme-light aside {
+    background: #ffffff !important;
+    border-color: #fed7aa !important;
+  }
+
+  .employee-dashboard.theme-light aside button {
+    color: #7c2d12 !important;
+  }
+
+  /* Selected sidebar item */
+  .employee-dashboard.theme-light aside button[class*="bg-cyan-500"] {
+    background: #f97316 !important;
+    color: #ffffff !important;
+    border-color: #f97316 !important;
+    box-shadow: 0 4px 14px rgba(249, 115, 22, 0.20);
+  }
+
+  .employee-dashboard.theme-light aside button[class*="bg-cyan-500"] svg {
+    color: #ffffff !important;
+  }
+
+  /* Sidebar hover */
+  .employee-dashboard.theme-light aside button:hover {
+    background: #fff1e6 !important;
+    color: #c2410c !important;
+  }
+
+  /* Headings */
+  .employee-dashboard.theme-light h1,
+  .employee-dashboard.theme-light h2,
+  .employee-dashboard.theme-light h3,
+  .employee-dashboard.theme-light h4 {
+    color: #9a3412 !important;
+  }
+
+  /* Normal text */
+  .employee-dashboard.theme-light .text-slate-100,
+  .employee-dashboard.theme-light .text-slate-200,
+  .employee-dashboard.theme-light .text-slate-300 {
+    color: #4a382f !important;
+  }
+
+  .employee-dashboard.theme-light .text-slate-400,
+  .employee-dashboard.theme-light .text-slate-500 {
+    color: #806b5d !important;
+  }
+
+  /* Orange highlights */
+  .employee-dashboard.theme-light .text-cyan-300,
+  .employee-dashboard.theme-light .text-cyan-400,
+  .employee-dashboard.theme-light .text-emerald-300,
+  .employee-dashboard.theme-light .text-emerald-400 {
+    color: #ea580c !important;
+  }
+
+  /* Orange backgrounds */
+  .employee-dashboard.theme-light .bg-cyan-500,
+  .employee-dashboard.theme-light .bg-emerald-500 {
+    background: #f97316 !important;
+  }
+
+  /* Orange borders */
+  .employee-dashboard.theme-light .border-cyan-400,
+  .employee-dashboard.theme-light .border-cyan-500,
+  .employee-dashboard.theme-light .border-emerald-500 {
+    border-color: #f97316 !important;
+  }
+
+  /* Cards */
+  .employee-dashboard.theme-light .rounded-2xl {
+    background: #ffffff !important;
+    border-color: #fed7aa !important;
+    box-shadow: 0 4px 18px rgba(124, 45, 18, 0.06);
+  }
+
+  /* Inputs */
+  .employee-dashboard.theme-light input,
+  .employee-dashboard.theme-light textarea,
+  .employee-dashboard.theme-light select {
+    background: #ffffff !important;
+    color: #3b2a20 !important;
+    border-color: #fdba74 !important;
+  }
+
+  .employee-dashboard.theme-light input:focus,
+  .employee-dashboard.theme-light textarea:focus,
+  .employee-dashboard.theme-light select:focus {
+    border-color: #f97316 !important;
+    outline-color: #f97316 !important;
+    box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.12);
+  }
+
+  /* General borders */
+  .employee-dashboard.theme-light .border-slate-800,
+  .employee-dashboard.theme-light .border-slate-700 {
+    border-color: #fed7aa !important;
+  }
+
+  /* Soft orange areas */
+  .employee-dashboard.theme-light .bg-cyan-500\\/10,
+  .employee-dashboard.theme-light .bg-cyan-500\\/20,
+  .employee-dashboard.theme-light .bg-emerald-500\\/5 {
+    background: #fff7ed !important;
+  }
+
+  /* Primary orange buttons */
+  .employee-dashboard.theme-light button.bg-cyan-500 {
+    background: #f97316 !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.20);
+  }
+
+  .employee-dashboard.theme-light button.bg-cyan-500:hover {
+    background: #ea580c !important;
+  }
+
+  /* Links */
+  .employee-dashboard.theme-light a {
+    color: #c2410c !important;
+  }
+
+  .employee-dashboard.theme-light a:hover {
+    color: #ea580c !important;
+  }
+
+  /* Orange icons */
+  .employee-dashboard.theme-light svg.text-cyan-400,
+  .employee-dashboard.theme-light svg.text-emerald-400 {
+    color: #f97316 !important;
+  }
+`;
 export function App() {
   // Authentication state
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
@@ -60,6 +208,28 @@ export function App() {
 
   // Active navigation tab
   const [activeTab, setActiveTab] = useState<string>('Overview');
+  // Employee dashboard theme
+type Theme = 'dark' | 'light';
+
+const [theme, setTheme] = useState<Theme>(() => {
+  const savedTheme = localStorage.getItem('welfare_theme');
+  return savedTheme === 'light' ? 'light' : 'dark';
+});
+
+useEffect(() => {
+  const syncTheme = () => {
+    const savedTheme = localStorage.getItem('welfare_theme');
+    setTheme(savedTheme === 'light' ? 'light' : 'dark');
+  };
+
+  window.addEventListener('welfare-theme-change', syncTheme);
+  window.addEventListener('storage', syncTheme);
+
+  return () => {
+    window.removeEventListener('welfare-theme-change', syncTheme);
+    window.removeEventListener('storage', syncTheme);
+  };
+}, []);
 
   // Hackathon Presentation Mode (Judge-friendly expanded view)
   const [presentationMode, setPresentationMode] = useState<boolean>(false);
@@ -358,7 +528,12 @@ if (currentUser.role === 'Personnel User') {
   const currentDetails = pageDetails[activeTab] || pageDetails.Overview;
 
   return (
-    <div className="min-h-screen bg-[#070b14] text-slate-100 flex relative cyber-grid antialiased">
+    <div
+  className={`employee-dashboard min-h-screen flex relative cyber-grid antialiased ${
+    theme === 'light' ? 'theme-light' : 'theme-dark'
+  }`}
+>
+  <style>{EMPLOYEE_THEME_STYLES}</style>
       {/* Ambient neural canvas background */}
       <NeuralCanvas />
 

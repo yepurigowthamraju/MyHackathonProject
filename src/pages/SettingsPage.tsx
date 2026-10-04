@@ -35,8 +35,8 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   onResetRegistry 
 }) => {
   const [activeSection, setActiveSection] = useState<
-    'profile' | 'notifications' | 'prediction' | 'thresholds' | 'privacy' | 'retention' | 'audit' | 'status'
-  >('profile');
+  'profile' | 'notifications' | 'prediction' | 'thresholds' | 'privacy' | 'retention' | 'audit' | 'status' | 'theme'
+>('profile');
 
   // Profile State
   const [profileName, setProfileName] = useState(currentUser?.name || 'Authorized Officer');
@@ -134,6 +134,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     { id: 'retention', label: 'Data Retention', icon: HardDrive, desc: 'Lifecycle storage & auto-purge rules' },
     { id: 'audit', label: 'Audit Logs', icon: FileText, desc: 'Immutable cryptographic access log' },
     { id: 'status', label: 'System Status', icon: Activity, desc: 'Hardware enclave & pipeline diagnostics' },
+    { id: 'theme', label: 'Theme', icon: Sliders, desc: 'Choose dark or light appearance' },
   ] as const;
 
   return (
@@ -819,6 +820,55 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
               </div>
             </GlassCard>
           )}
+          {/* 9. Theme Section */}
+{activeSection === 'theme' && (
+  <GlassCard className="p-6 space-y-5">
+    <div className="border-b border-slate-800 pb-3">
+      <h3 className="text-base font-bold text-white flex items-center gap-2">
+        <Sliders className="w-4 h-4 text-cyan-400" />
+        Theme Settings
+      </h3>
+
+      <p className="text-xs text-slate-400 mt-0.5">
+        Choose how the Employee portal looks.
+      </p>
+    </div>
+
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+      <button
+        type="button"
+        onClick={() => {
+          localStorage.setItem('welfare_theme', 'dark');
+          window.dispatchEvent(new Event('welfare-theme-change'));
+        }}
+        className="p-5 rounded-xl border border-slate-700 bg-slate-900 hover:bg-slate-800 text-left transition"
+      >
+        <div className="text-lg mb-2">🌙</div>
+        <div className="font-bold text-white">Dark Theme</div>
+        <div className="text-xs text-slate-400 mt-1">
+          Use the dark dashboard appearance.
+        </div>
+      </button>
+
+      <button
+        type="button"
+        onClick={() => {
+          localStorage.setItem('welfare_theme', 'light');
+          window.dispatchEvent(new Event('welfare-theme-change'));
+        }}
+        className="p-5 rounded-xl border border-slate-700 bg-white hover:bg-slate-100 text-left transition"
+      >
+        <div className="text-lg mb-2">☀️</div>
+        <div className="font-bold text-slate-800">Light Theme</div>
+        <div className="text-xs text-slate-500 mt-1">
+          Use the light dashboard appearance.
+        </div>
+      </button>
+
+    </div>
+  </GlassCard>
+)}
         </div>
       </div>
     </div>

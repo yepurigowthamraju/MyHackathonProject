@@ -50,6 +50,7 @@ type UserTab =
   | 'Settings';
 
 type Language = 'English' | 'Telugu' | 'Hindi';
+type Theme = 'dark' | 'light';
 
 interface Props {
   currentUser: UserProfile;
@@ -471,7 +472,190 @@ const translations = {
 /* -------------------------------------------------------
    NAVIGATION
 ------------------------------------------------------- */
+const THEME_STYLES = `
+  /* =================================
+     USER LIGHT THEME
+     WHITE + ORANGE
+  ================================= */
 
+  .welfare-dashboard.theme-light {
+    background: #fffaf5 !important;
+    color: #3b2a20 !important;
+  }
+
+  /* Header */
+  .welfare-dashboard.theme-light header {
+    background: #ffffff !important;
+    border-color: #fed7aa !important;
+  }
+
+  .welfare-dashboard.theme-light header h1,
+  .welfare-dashboard.theme-light header h2,
+  .welfare-dashboard.theme-light header h3 {
+    color: #9a3412 !important;
+  }
+
+  .welfare-dashboard.theme-light header p {
+    color: #ea580c !important;
+  }
+
+  /* Sidebar */
+  .welfare-dashboard.theme-light aside {
+    background: #ffffff !important;
+    border-color: #fed7aa !important;
+  }
+
+  .welfare-dashboard.theme-light aside p,
+  .welfare-dashboard.theme-light aside span {
+    color: #7c2d12 !important;
+  }
+
+  /* Sidebar buttons */
+  .welfare-dashboard.theme-light aside button {
+    color: #7c2d12 !important;
+    background: transparent !important;
+    border-color: transparent !important;
+  }
+
+  /* Selected sidebar option */
+  .welfare-dashboard.theme-light aside button[class*="bg-cyan-500"] {
+    background: #f97316 !important;
+    color: #ffffff !important;
+    border-color: #f97316 !important;
+    box-shadow: 0 4px 14px rgba(249, 115, 22, 0.20);
+  }
+
+  .welfare-dashboard.theme-light aside button[class*="bg-cyan-500"] svg {
+    color: #ffffff !important;
+  }
+
+  /* Sidebar hover */
+  .welfare-dashboard.theme-light aside button:hover {
+    background: #fff1e6 !important;
+    color: #c2410c !important;
+  }
+
+  /* Cards */
+  .welfare-dashboard.theme-light .rounded-2xl {
+    background: #ffffff !important;
+    border-color: #fed7aa !important;
+    box-shadow: 0 4px 18px rgba(124, 45, 18, 0.06);
+  }
+
+  /* Headings */
+  .welfare-dashboard.theme-light h1,
+  .welfare-dashboard.theme-light h2,
+  .welfare-dashboard.theme-light h3,
+  .welfare-dashboard.theme-light h4 {
+    color: #9a3412 !important;
+  }
+
+  /* Normal text */
+  .welfare-dashboard.theme-light .text-slate-100,
+  .welfare-dashboard.theme-light .text-slate-200,
+  .welfare-dashboard.theme-light .text-slate-300 {
+    color: #4a382f !important;
+  }
+
+  .welfare-dashboard.theme-light .text-slate-400,
+  .welfare-dashboard.theme-light .text-slate-500 {
+    color: #806b5d !important;
+  }
+
+  /* Orange highlights */
+  .welfare-dashboard.theme-light .text-cyan-300,
+  .welfare-dashboard.theme-light .text-cyan-400,
+  .welfare-dashboard.theme-light .text-emerald-300,
+  .welfare-dashboard.theme-light .text-emerald-400 {
+    color: #ea580c !important;
+  }
+
+  /* Orange backgrounds */
+  .welfare-dashboard.theme-light .bg-cyan-500,
+  .welfare-dashboard.theme-light .bg-emerald-500 {
+    background: #f97316 !important;
+  }
+
+  /* Orange borders */
+  .welfare-dashboard.theme-light .border-cyan-400,
+  .welfare-dashboard.theme-light .border-cyan-500,
+  .welfare-dashboard.theme-light .border-emerald-500 {
+    border-color: #f97316 !important;
+  }
+
+  /* Inputs */
+  .welfare-dashboard.theme-light input,
+  .welfare-dashboard.theme-light textarea,
+  .welfare-dashboard.theme-light select {
+    background: #ffffff !important;
+    color: #3b2a20 !important;
+    border-color: #fdba74 !important;
+  }
+
+  .welfare-dashboard.theme-light input:focus,
+  .welfare-dashboard.theme-light textarea:focus,
+  .welfare-dashboard.theme-light select:focus {
+    border-color: #f97316 !important;
+    outline-color: #f97316 !important;
+    box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.12);
+  }
+
+  .welfare-dashboard.theme-light input::placeholder,
+  .welfare-dashboard.theme-light textarea::placeholder {
+    color: #a88976 !important;
+  }
+
+  /* General borders */
+  .welfare-dashboard.theme-light .border-slate-800,
+  .welfare-dashboard.theme-light .border-slate-700 {
+    border-color: #fed7aa !important;
+  }
+
+  /* Soft orange areas */
+  .welfare-dashboard.theme-light .bg-emerald-500\\/5,
+  .welfare-dashboard.theme-light .bg-cyan-500\\/10,
+  .welfare-dashboard.theme-light .bg-cyan-500\\/20 {
+    background: #fff7ed !important;
+  }
+
+  /* Buttons */
+  .welfare-dashboard.theme-light button {
+    border-color: #fdba74;
+  }
+
+  /* Primary orange buttons */
+  .welfare-dashboard.theme-light button.bg-cyan-500 {
+    background: #f97316 !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.20);
+  }
+
+  .welfare-dashboard.theme-light button.bg-cyan-500:hover {
+    background: #ea580c !important;
+  }
+
+  /* Theme option */
+  .welfare-dashboard.theme-light .theme-option.active {
+    background: #f97316 !important;
+    color: #ffffff !important;
+    border-color: #f97316 !important;
+  }
+
+  /* Links */
+  .welfare-dashboard.theme-light a {
+    color: #c2410c !important;
+  }
+
+  .welfare-dashboard.theme-light a:hover {
+    color: #ea580c !important;
+  }
+
+  /* Orange icons */
+  .welfare-dashboard.theme-light svg.text-cyan-400,
+  .welfare-dashboard.theme-light svg.text-emerald-400 {
+    color: #f97316 !important;
+  }
+`;
 const nav: {
   id: UserTab;
   key: keyof typeof translations.English;
@@ -593,6 +777,10 @@ export function UserDashboardPage({
 
     return 'English';
   });
+  const [theme, setTheme] = useState<Theme>(() => {
+  const savedTheme = localStorage.getItem('welfare_theme');
+  return savedTheme === 'light' ? 'light' : 'dark';
+});
 
   const t = translations[language];
 
@@ -602,6 +790,9 @@ export function UserDashboardPage({
       language
     );
   }, [language]);
+  useEffect(() => {
+  localStorage.setItem('welfare_theme', theme);
+}, [theme]);
 
   const [notifications, setNotifications] =
     useState(true);
@@ -1804,7 +1995,42 @@ export function UserDashboardPage({
                   }
                 />
               </label>
+                <div className="rounded-xl border border-slate-800 p-4">
+  <div className="flex items-center justify-between gap-4">
+    <div>
+      <b>Theme</b>
+      <span className="block text-xs text-slate-500">
+        Choose how the dashboard looks
+      </span>
+    </div>
 
+    <div className="flex items-center gap-2">
+      <button
+        type="button"
+        onClick={() => setTheme('dark')}
+        className={`rounded-lg px-3 py-2 text-sm border ${
+          theme === 'dark'
+            ? 'border-cyan-400 bg-cyan-500/10 text-cyan-300'
+            : 'border-slate-700 text-slate-400'
+        }`}
+      >
+        🌙 Dark
+      </button>
+
+      <button
+        type="button"
+        onClick={() => setTheme('light')}
+        className={`rounded-lg px-3 py-2 text-sm border ${
+          theme === 'light'
+            ? 'border-cyan-400 bg-cyan-500/10 text-cyan-300'
+            : 'border-slate-700 text-slate-400'
+        }`}
+      >
+        ☀️ Light
+      </button>
+    </div>
+  </div>
+</div>
               <label className="flex items-center justify-between rounded-xl border border-slate-800 p-4">
                 <span>
                   <b>
@@ -1838,9 +2064,13 @@ export function UserDashboardPage({
   --------------------------------------------------- */
 
   return (
-    <div className="min-h-screen bg-[#070b14] text-slate-100 flex">
+    <div
+  className={`welfare-dashboard min-h-screen bg-[#070b14] text-slate-100 flex ${
+    theme === 'light' ? 'theme-light' : 'theme-dark'
+  }`}
+>
       {/* DESKTOP SIDEBAR */}
-
+<style>{THEME_STYLES}</style>
       <aside className="hidden md:flex w-72 flex-col border-r border-slate-800 bg-slate-950/90 p-4 sticky top-0 h-screen">
         <div className="flex items-center gap-3 px-3 py-4 border-b border-slate-800">
           <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center">
