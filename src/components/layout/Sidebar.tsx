@@ -48,6 +48,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const navItems: NavItem[] = [
     { id: 'Overview', label: 'Overview', icon: LayoutDashboard },
     { id: 'Personnel', label: 'Personnel', icon: Users },
+    { id: 'PersonnelVideos', label: 'Uploaded Videos', icon: Video },
     { id: 'AIRisk', label: 'AI Risk Prediction', icon: BrainCircuit, badge: 'Horizon 7d', badgeColor: 'bg-violet-500/20 text-violet-300' },
     { id: 'StressAnalytics', label: 'Stress Analytics', icon: Activity },
     { id: 'FatigueMonitoring', label: 'Fatigue Monitoring', icon: BatteryCharging },
