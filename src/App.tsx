@@ -18,6 +18,7 @@ import { InterventionCenterPage } from './pages/InterventionCenterPage';
 import { ReportsInsightsPage } from './pages/ReportsInsightsPage';
 import { AIAssistantPage } from './pages/AIAssistantPage';
 import { SettingsPage } from './pages/SettingsPage';
+import { PersonnelVideosPage } from './pages/PersonnelVideosPage';
 
 import { PersonnelModal } from './components/modals/PersonnelModal';
 import { ScheduleCheckInModal } from './components/modals/ScheduleCheckInModal';
@@ -47,8 +48,9 @@ import {
   AlertTriangle, 
   LifeBuoy, 
   FileText, 
-  Bot, 
-  Settings 
+ Bot,
+Settings,
+Video 
 } from 'lucide-react';
 const EMPLOYEE_THEME_STYLES = `
   /* =================================
@@ -452,7 +454,10 @@ const [wellnessUpdates, setWellnessUpdates] = useState<import('./types').Wellnes
     AIAssistant: {
       title: 'Welfare Intelligence Assistant',
       subtitle: 'Natural language queries for aggregated personnel wellbeing trends'
-    },
+    },PersonnelVideos: {
+  title: 'Uploaded Videos',
+  subtitle: 'Videos submitted by personnel through the Video Sensor'
+},
     Settings: {
       title: 'System Governance & Privacy Controls',
       subtitle: 'Ethical safeguards, role-based access segregation, and audit ledgers'
@@ -466,6 +471,7 @@ const [wellnessUpdates, setWellnessUpdates] = useState<import('./types').Wellnes
   const sharedNavItems: NavItem[] = [
     { id: 'Overview', label: 'Overview', icon: LayoutDashboard },
     { id: 'Personnel', label: 'Personnel', icon: Users },
+    { id: 'PersonnelVideos', label: 'Uploaded Videos', icon: Video },
     { id: 'AIRisk', label: 'AI Risk Prediction', icon: BrainCircuit, badge: 'Horizon 7d', badgeColor: 'bg-violet-500/20 text-violet-300' },
     { id: 'StressAnalytics', label: 'Stress Analytics', icon: Activity },
     { id: 'FatigueMonitoring', label: 'Fatigue Monitoring', icon: BatteryCharging },
@@ -664,12 +670,14 @@ if (currentUser.role === 'Personnel User') {
           )}
 
           {activeTab === 'Personnel' && (
+            
             <PersonnelPage
               personnelList={personnelList}
               onSelectPersonnel={(p) => setSelectedPersonnel(p)}
               onOpenScheduleModal={(p) => setScheduleCheckInTarget(p)}
             />
           )}
+          {activeTab === 'PersonnelVideos' && <PersonnelVideosPage />}
 
           {activeTab === 'AIRisk' && <AIRiskPage />}
 
