@@ -12,6 +12,7 @@ import {
   Bot,
   Settings,
   ShieldCheck,
+  Video,
   CheckCircle,
   Lock
 } from 'lucide-react';
