@@ -452,6 +452,96 @@ app.post(
     }
   }
 );
+/* -------------------------
+   USER WELLNESS HISTORY
+------------------------- */
+
+app.get('/api/wellness/history', verifyToken, (req, res) => {
+  try {
+    if (req.user.role !== 'Personnel User') {
+      return res.status(403).json({
+        error: 'Only personnel users can access their wellness history.',
+      });
+    }
+
+    const history = db.prepare(`
+      SELECT
+        id,
+        personnel_id AS personnelId,
+        date,
+        body_weight AS bodyWeight,
+        water_intake AS waterIntake,
+        meals,
+        sleep_hours AS sleepHours,
+        sleep_quality AS sleepQuality,
+        exercise,
+        stress_level AS stressLevel,
+        fatigue_level AS fatigueLevel,
+        mood,
+        energy_level AS energyLevel,
+        rest_recovery AS restRecovery,
+        notes,
+        ai_risk AS aiRisk,
+        ai_confidence AS aiConfidence,
+        human_verification AS humanVerification,
+        notification_status AS notificationStatus
+      FROM wellness_updates
+      WHERE personnel_id = ?
+      ORDER BY date DESC
+    `).all(req.user.personnelId);
+
+    res.json(history);
+  } catch (error) {
+    console.error('Wellness history error:', error);
+
+    res.status(500).json({
+      error: 'Failed to load wellness history.',
+    });
+  }
+});
+app.get('/api/wellness/history', verifyToken, (req, res) => {
+  try {
+    if (req.user.role !== 'Personnel User') {
+      return res.status(403).json({
+        error: 'Only personnel users can access wellness history.',
+      });
+    }
+
+    const history = db.prepare(`
+      SELECT
+        id,
+        personnel_id AS personnelId,
+        date,
+        body_weight AS bodyWeight,
+        water_intake AS waterIntake,
+        meals,
+        sleep_hours AS sleepHours,
+        sleep_quality AS sleepQuality,
+        exercise,
+        stress_level AS stressLevel,
+        fatigue_level AS fatigueLevel,
+        mood,
+        energy_level AS energyLevel,
+        rest_recovery AS restRecovery,
+        notes,
+        ai_risk AS aiRisk,
+        ai_confidence AS aiConfidence,
+        human_verification AS humanVerification,
+        notification_status AS notificationStatus,
+        created_at AS createdAt
+      FROM wellness_updates
+      WHERE personnel_id = ?
+      ORDER BY date DESC, id DESC
+    `).all(req.user.personnelId);
+
+    res.json(history);
+  } catch (error) {
+    console.error('Wellness history error:', error);
+    res.status(500).json({
+      error: 'Failed to load wellness history.',
+    });
+  }
+});
 app.get('/api/wellness/analytics', verifyToken, (req, res) => {
   try {
     if (req.user.role !== 'Welfare Administrator') {

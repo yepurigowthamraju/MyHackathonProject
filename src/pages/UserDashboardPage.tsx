@@ -957,7 +957,46 @@ export function UserDashboardPage({
       );
     }
   };
+/* ---------------------------------------------------
+   LOAD WELLNESS HISTORY
+--------------------------------------------------- */
 
+useEffect(() => {
+  const loadWellnessHistory = async () => {
+    const token = localStorage.getItem('welfare_token');
+
+    if (!token) return;
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/wellness/history`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          cache: 'no-store',
+        }
+      );
+
+      if (!response.ok) return;
+
+      const data = await response.json();
+
+      if (Array.isArray(data)) {
+        data.forEach((item) => {
+          onSubmitWellnessUpdate({
+            ...item,
+            id: String(item.id),
+          });
+        });
+      }
+    } catch {
+      // Keep dashboard usable if history cannot be loaded.
+    }
+  };
+
+  loadWellnessHistory();
+}, [currentUser.id]);
   /* ---------------------------------------------------
      LOAD VIDEOS
   --------------------------------------------------- */
